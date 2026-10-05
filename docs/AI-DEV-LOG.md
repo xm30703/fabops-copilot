@@ -16,6 +16,7 @@
 | Git／CI/CD | Dockerfiles、GitHub Actions、部署 gate、rollback、runner 啟動腳本 | 實跑 Linux build、Windows deploy、故障自動回復與手動 rollback；修復跨平台 lockfile 與 Piscina advisory；GitHub 遠端執行需另外驗收 |
 | 本機專案規劃與搬移 | 固定 source/runtime、集中 paths.ps1、每個 checkout 自己的 venv、固定 compose name | 保留 .git／keys／模型／DB；核對 development 26 tickets/11 audits、staging 13 tickets/1 audit；新路徑啟動、18 pytest、真實 AI 及 browser 驗收 |
 | 初次搜尋輸入 race | native disabled host attribute 與 Reactive Forms 就緒流程 | 搬移驗收捕捉舊有偶發覆蓋輸入；新增十次立即輸入的回歸，四個 mock 與真實 browser 修正後通過 |
+| GitHub CI/CD 實跑 | 私人 repo、GHCR、Windows runner、BOM 修正 | Hosted CI／images／本機部署全部通過；先以 Linux／Windows packages:read token 確認 registry 權限，再用假 token 重現 .NET Framework stdin 的 UTF-8 BOM，修正後 runner 記錄 host preamble=3 bytes 且登入成功；三個真實 AI 案例通過 |
 
 人工 code review 建議依序完成：
 

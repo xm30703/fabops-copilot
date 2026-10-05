@@ -19,7 +19,11 @@ CI 使用 GitHub hosted Ubuntu，執行 xUnit、Python unit/MCP/live DB、Angula
 
 只有 main 且測試通過才推送 GHCR；image tag 使用完整 commit SHA。PR 不發布 image，也不執行本機 runner。CD 使用本機 Windows runner 與 Ollama，要求模型就緒、向量匯入成功、三個事故全為 ollama-agent 且引用合法。Actions 綁定明確 commit SHA，workflow 的 token 權限依 job 限制。
 
+Release images 帶有 OCI source／revision labels。下載前以 job 的 GITHUB_TOKEN（packages:read）確認能讀取預期映像 metadata，再透過無 BOM 的 UTF-8 stdin 登入 Docker；登入使用 job 暫存 Docker config，結束時登出。metadata 的 repository 欄位可能為空，不拿它取代實際權限檢查。GitHub CLI 的個人登入不作為 CD registry 憑證。
+
 `.github/workflows/ci.yml` 負責 CI、image 與 CD；`rollback.yml` 可從 GitHub Actions 手動回復上一個成功版本。CD 紀錄以 environment `local-staging` 顯示。
+
+2026-10-05 已完成[實際 GitHub CI/CD](https://github.com/xm30703/fabops-copilot/actions/runs/37271684688)，部署 application commit `10f26e271a088dc82c3d10d0944bd89510943edc`。三個真實 AI release cases 通過，staging 為 http://127.0.0.1:4319；詳細數據見 [驗證紀錄](VALIDATION.md)。後續只更新驗證文件的 commit 使用 `[skip ci]`，維持此已驗收 application release。
 
 ## 本機部署與回復
 

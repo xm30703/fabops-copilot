@@ -10,13 +10,15 @@
 
 - 已實作：四個 Angular 頁面、.NET domain API／schema、模型自主選工具的 bounded agent、真實 MCP client/server、SOP chunking／embedding／pgvector 檢索、Ticket 草稿與核准、交接摘要、tracing、測試及 CI workflow。
 - 已驗證：Windows PowerShell 5.1 啟動、Angular production build、標準 .NET build／8 個 xUnit、18 個 pytest（含 live DB 核准與 MCP 協定）、真實 Ollama／pgvector 三事故評估、桌面與手機的 live Playwright 核准流程、跨三服務的 Jaeger trace，以及 k6 本機讀取 API 測試。
-- 本機 Docker staging 已實際部署，通過真實 AI 驗收、故障版本自動回復與手動 rollback。GitHub Actions 的 CI／image publish／本機 CD workflows 已建立；遠端實際執行結果記於驗證紀錄。
+- GitHub Actions 已實際通過 CI → 兩個 GHCR images → Windows runner → 本機 Docker staging → 真實 AI 驗收；[成功執行紀錄](https://github.com/xm30703/fabops-copilot/actions/runs/37271684688)。本機故障版本自動回復與手動 rollback 另已演練通過。
 
 詳見 [驗證紀錄](docs/VALIDATION.md)。`artifacts/live-workflow-*.png` 是真實本機服務截圖；`workflow-*.png` 是較早的 mock API 測試。
 
 ## 第一步：本機啟動
 
 本機 Git 專案位於 `C:\Dev\fabops-copilot`；工具、模型與部署狀態位於 `C:\Dev\fabops-runtime`。不依賴聊天目錄。完整目錄規劃與搬移驗證見 [本機環境](docs/LOCAL-SETUP.md)。
+
+GitHub repository：[xm30703/fabops-copilot](https://github.com/xm30703/fabops-copilot)（目前為私人 repository）。
 
 這台電腦已準備 Node 24、Python 3.12、下載並校驗的 .NET 8.0.425 SDK 與 Ollama portable 0.35.1。本機模型為 qwen2.5:7b 與 nomic-embed-text。Bootstrap 為目前 checkout 建立獨立 `.venv`。
 
