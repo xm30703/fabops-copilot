@@ -69,5 +69,7 @@ GitHub hosted CI／runner 自動部署、cloud staging、正式企業系統串�
 - Linux npm ci 發現 Windows lockfile 缺少 @emnapi entries，已於乾淨 Linux container 重建 lockfile，Windows npm ci/build/browser 重新通過。
 - Piscina build dependency 鎖至 5.3.2，npm audit 為 0。修補依據 [上游 advisory](https://github.com/advisories/GHSA-67c8-pqhq-4rmx)。
 - CI/CD 與 rollback workflows 通過 actionlint 1.7.12；PowerShell scripts 通過 parser 檢查。GitHub workflow 的實際執行仍待 GitHub CLI 登入後確認，不能用本機結果代替。
+- 用另一套暫時的 Docker project／volume 實跑 CI image job 的 offline 流程：容器 readiness、smoke、lexical ingestion、三事故 baseline evaluation 全部通過，之後只清除該暫時環境。
+- 已建立 main 分支與本地 commits，Git 工作目錄乾淨。修正原 sandbox 建立的 repository 根目錄／.git ownership，使用者可正常執行 Git，不需全域 safe.directory exception。82 個 source files 的已知本機 secrets／private key／GitHub token scan 通過，環境設定與 evidence 不進版控。
 
 原始證據在忽略版控的 `artifacts/container-build.log`、`staging-deploy.log`、`automatic-recovery.log`、`second-release.log`、`manual-rollback.log`，以及 `.deploy/evaluation-*.json`。

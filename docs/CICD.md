@@ -52,7 +52,7 @@ build placeholder 只供 compose 解析，不會打包到 image。deploy 另產�
 3. repository Actions variables 設 `FABOPS_STATE_DIR` 為本機專案 `.deploy` 的絕對路徑，再設 `LOCAL_CD_ENABLED=true`。持久 state 必須在 runner checkout 之外，避免 checkout clean 刪除憑證與版本紀錄。
 4. 保持 Windows、Docker Desktop、Ollama 和 runner 啟動。重開機後在本專案執行 `scripts/start-runner.ps1`，再到 Actions 手動執行 CI/CD。
 
-這台電腦已下載並校驗 GitHub CLI 2.102.0 與 Windows Actions runner 2.337.0，位於 workspace 的 `work/`。CLI 登入、local commit 都完成後，可在本專案执行以下腳本，建立私人 repository、設定 origin、註冊 runner／variables，再 push main：
+這台電腦已下載並校驗 GitHub CLI 2.102.0 與 Windows Actions runner 2.337.0，位於 workspace 的 `work/`。CLI 登入、local commit 都完成後，可在本專案執行以下腳本，建立私人 repository、設定 origin、註冊 runner／variables，再 push main：
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\connect-github.ps1 -EnableLocalCd
