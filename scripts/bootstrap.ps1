@@ -1,8 +1,7 @@
 #Requires -Version 5.1
 param([switch]$Offline)
 $ErrorActionPreference = 'Stop'
-$projectRoot = Split-Path -Parent $PSScriptRoot
-$workspaceRoot = Split-Path -Parent (Split-Path -Parent $projectRoot)
+. (Join-Path $PSScriptRoot 'paths.ps1')
 Set-Location -LiteralPath $projectRoot
 New-Item -ItemType Directory -Path artifacts,.tools -Force | Out-Null
 function New-RandomHex([int]$Bytes) {
@@ -28,16 +27,14 @@ $env:DOTNET_CLI_HOME = Join-Path $projectRoot '.tools\dotnet-home'
 $env:NUGET_PACKAGES = Join-Path $projectRoot '.tools\nuget'
 $env:NUGET_HTTP_CACHE_PATH = Join-Path $projectRoot '.tools\nuget-http'
 $env:NUGET_SCRATCH = Join-Path $projectRoot '.tools\nuget-scratch'
-$env:PLAYWRIGHT_BROWSERS_PATH = Join-Path $projectRoot '.tools\playwright'
-$preinstalledDotnet = Join-Path $workspaceRoot 'work\tools\dotnet\dotnet.exe'
-$preinstalledPython = Join-Path $workspaceRoot 'work\venv\Scripts\python.exe'
-$preinstalledOllama = Join-Path $workspaceRoot 'work\tools\ollama\ollama.exe'
-$dotnetExe = if (Test-Path -LiteralPath $preinstalledDotnet) { $preinstalledDotnet } else { (Get-Command dotnet -ErrorAction Stop).Source }
-$pythonExe = if (Test-Path -LiteralPath $preinstalledPython) { $preinstalledPython } else {
-    if (-not (Test-Path -LiteralPath '.venv\Scripts\python.exe')) { python -m venv .venv; if ($LASTEXITCODE) { throw 'Python venv failed' } }
-    Join-Path $projectRoot '.venv\Scripts\python.exe'
+$env:PLAYWRIGHT_BROWSERS_PATH = Join-Path $runtimeRoot 'playwright'
+$dotnetExe = Resolve-FabOpsTool 'dotnet.exe' 'tools\dotnet\dotnet.exe'
+if (-not (Test-Path -LiteralPath $pythonEnvironment)) {
+    python.exe -m venv .venv
+    if ($LASTEXITCODE) { throw 'Python venv failed' }
 }
-& $pythonExe -m pip install -r requirements.txt --cache-dir .tools\pip-cache
+$pythonExe = $pythonEnvironment
+& $pythonExe -m pip install -r requirements-lock.txt --cache-dir (Join-Path $runtimeRoot 'cache\pip')
 if ($LASTEXITCODE) { throw 'Python dependency installation failed' }
 docker compose up -d --wait
 if ($LASTEXITCODE) { throw 'Docker Compose failed. Ensure Docker Desktop Engine is running.' }
@@ -68,10 +65,10 @@ try {
     $processes += @{id=$apiProcess.Id; executable=(Get-Process -Id $apiProcess.Id).Path; startedAtUtc=$apiProcess.StartTime.ToUniversalTime().ToString('o')}
     Wait-Endpoint 'http://127.0.0.1:5080/health/ready'
     if (-not $Offline) {
-        $ollamaExe = if (Test-Path -LiteralPath $preinstalledOllama) { $preinstalledOllama } else { (Get-Command ollama -ErrorAction Stop).Source }
+        $ollamaExe = Resolve-FabOpsTool 'ollama.exe' 'tools\ollama\ollama.exe'
         try { $null = Invoke-WebRequest -Uri 'http://127.0.0.1:11434/api/tags' -UseBasicParsing -TimeoutSec 2 }
         catch {
-            $env:OLLAMA_MODELS = Join-Path $workspaceRoot 'work\models'
+            $env:OLLAMA_MODELS = Join-Path $runtimeRoot 'models'
             $env:OLLAMA_HOST = '127.0.0.1:11434'
             $ollamaProcess = Start-Process -FilePath $ollamaExe -ArgumentList 'serve' -WindowStyle Hidden -PassThru -RedirectStandardOutput 'artifacts\ollama.stdout.log' -RedirectStandardError 'artifacts\ollama.stderr.log'
             $processes += @{id=$ollamaProcess.Id; executable=(Get-Process -Id $ollamaProcess.Id).Path; startedAtUtc=$ollamaProcess.StartTime.ToUniversalTime().ToString('o')}

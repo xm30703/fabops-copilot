@@ -47,3 +47,9 @@
 CI 執行 offline baseline 與真實 DB／容器測試；CD 強制 real Ollama embedding、MCP agent 及三事故引用檢查，失敗自動回復上一個成功 image。Release state 與 secrets 在 runner checkout 外。手動 rollback 和失敗恢復均已本機實跑。取捨：主機關閉或 runner 停止時 CD 等待；部署有短暫重建服務；目前只回復 images，沒有破壞性 DB migration 的回復。
 
 Main 才能觸發 self-hosted 部署；PR 僅用 hosted runner。Actions token 採 job 最小權限，登入 registry 憑證用 job temporary directory，第三方 action 綁 commit SHA。GitHub remote／runner 的首次建立仍需要使用者帳號登入。
+
+## ADR-009：固定 source 與獨立 runtime
+
+狀態：採用。長期 Git 專案放在 C:\Dev\fabops-copilot；工具、模型、GitHub runner、登入設定、staging state 放在 C:\Dev\fabops-runtime。scripts/paths.ps1 統一解析 checkout-relative 與 runtime-relative 路徑，可透過 FABOPS_RUNTIME_DIR 改用其他主機位置。移除從專案往上回溯聊天 workspace/work 的假設。
+
+Python venv 在各 checkout 重新建立，避免 Windows entrypoint 固定舊絕對路徑。Docker project name 固定，保留既有資料 volume；staging secrets 和 release state 不屬於 source checkout 或 runner checkout。取捨：工具／模型需在新主機安裝或準備，Git clone 不含大型 runtime assets。搬移時核對 Git objects、既有工單／稽核、開發啟動及 staging deployment。

@@ -18,6 +18,7 @@ jobs:
         shell: powershell
         env:
           FABOPS_STATE_DIR: ${{ vars.FABOPS_STATE_DIR }}
+          FABOPS_RUNTIME_DIR: ${{ vars.FABOPS_RUNTIME_DIR }}
         run: |
           if (-not $env:FABOPS_STATE_DIR) { throw 'Configure FABOPS_STATE_DIR first' }
           .\scripts\deploy.ps1 -StateDirectory $env:FABOPS_STATE_DIR -Rollback

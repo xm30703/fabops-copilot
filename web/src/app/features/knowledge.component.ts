@@ -1,17 +1,22 @@
-import { afterNextRender, ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { afterNextRender, ChangeDetectionStrategy, Component, Directive, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FabOpsStore } from '../fabops.store';
 
+// Apply a native attribute at element creation, before reactive forms attaches its accessor.
+// FormControl.enable() removes it once the form has rendered and can receive input.
+@Directive({ selector: 'input[fabopsInitiallyDisabled]', host: { disabled: '' } })
+class InitiallyDisabledDirective {}
+
 @Component({
   selector: 'fabops-knowledge',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, InitiallyDisabledDirective],
   template: `
     <section class="panel standalone">
       <div class="panel-heading"><h2>Enterprise knowledge search</h2><span>POSTGRESQL + PGVECTOR</span></div>
       <p>SOP 分段、embedding 與關鍵字混合搜尋；embedding 不可用時會標示降級。</p>
       <form class="search-form" [formGroup]="form" (ngSubmit)="store.search()">
-        <input aria-label="搜尋 SOP" formControlName="query" placeholder="vacuum pressure / 真空壓力" required maxlength="1000">
+        <input fabopsInitiallyDisabled aria-label="搜尋 SOP" formControlName="query" placeholder="vacuum pressure / 真空壓力" required maxlength="1000">
         <button class="primary" type="submit" [disabled]="!ready() || store.busy() || form.invalid || !store.searchQuery().trim()">搜尋</button>
       </form>
       @if (store.searchResults(); as results) {
@@ -33,7 +38,8 @@ export class KnowledgeComponent {
 
   constructor() {
     this.form.controls.query.valueChanges.pipe(takeUntilDestroyed()).subscribe(query => this.store.searchQuery.set(query));
-    // Keep the input disabled until Angular has attached the control bindings.
+    // The native disabled attribute also protects the interval before FormControlName attaches.
+    // Enabling the control after render removes that native attribute through its value accessor.
     afterNextRender(() => {
       this.form.controls.query.enable({ emitEvent: false });
       this.ready.set(true);

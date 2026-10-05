@@ -1,6 +1,6 @@
 # 本機專案、Git 與 CI/CD
 
-專案根目錄就是本 README 上層的 `fabops-mvp`，可直接用 VS Code 開啟。所有 domain 資料及 SOP 都是合成資料；模型、虛擬環境、日誌、`.env` 與部署憑證不進 Git。
+本機專案根目錄為 `C:\Dev\fabops-copilot`，可直接用 VS Code 開啟。工具與部署狀態獨立存於 `C:\Dev\fabops-runtime`，目錄規劃見 [本機環境](LOCAL-SETUP.md)。所有 domain 資料及 SOP 都是合成資料；模型、虛擬環境、日誌、`.env` 與部署憑證不進 Git。
 
 ## 兩種本機環境
 
@@ -15,7 +15,7 @@ Staging 的 Angular 靜態檔案和 Python Agent 共用 gateway image；.NET 為
 
 `feature branch → pull request → CI → merge main → CI → build/test images → GHCR → Windows runner → local staging`
 
-CI 使用 GitHub hosted Ubuntu，執行 xUnit、Python unit/MCP/live DB、Angular production build、三個 mock Playwright case、offline baseline retrieval 與容器內的真實 domain/DB smoke。CI 沒有 GPU 模型，所以 baseline 結果不當作 AI 驗收。
+CI 使用 GitHub hosted Ubuntu，執行 xUnit、Python unit/MCP/live DB、Angular production build、四個 mock Playwright case、offline baseline retrieval 與容器內的真實 domain/DB smoke。CI 沒有 GPU 模型，所以 baseline 結果不當作 AI 驗收。
 
 只有 main 且測試通過才推送 GHCR；image tag 使用完整 commit SHA。PR 不發布 image，也不執行本機 runner。CD 使用本機 Windows runner 與 Ollama，要求模型就緒、向量匯入成功、三個事故全為 ollama-agent 且引用合法。Actions 綁定明確 commit SHA，workflow 的 token 權限依 job 限制。
 
@@ -34,25 +34,25 @@ docker compose -f .\compose.staging.yaml build
 .\scripts\deploy.ps1 -ImageTag local-v1
 ```
 
-build placeholder 只供 compose 解析，不會打包到 image。deploy 另產生 `.deploy/staging.env`，用隨機、不同的 key，並明確載入 staging 值。不可刪除此檔後直接沿用既有 DB volume，否則密碼會不一致。
+build placeholder 只供 compose 解析，不會打包到 image。deploy 使用 runtime 的 `staging/staging.env`（這台電腦為 `C:\Dev\fabops-runtime\staging\staging.env`），用隨機、不同的 key，並明確載入 staging 值。搬移保留了原有憑證；不可刪除此檔後直接沿用既有 DB volume，否則密碼會不一致。
 
 ```powershell
 .\scripts\deploy.ps1 -ImageTag <commit-sha> -ImagePrefix ghcr.io/<owner>/<repo> -Pull
 .\scripts\deploy.ps1 -Rollback
 ```
 
-部署會鎖住 state directory，等待容器就緒、執行 smoke、重建 SOP vectors、跑 AI 評估，全部通過才更新 `release.json`。失敗時回復 current，仍以非零 exit 結束，讓 Actions 正確顯示部署失敗。Previous/current image 需保留在 Docker cache。報告位於 `.deploy/evaluation-<tag>.json`，不含 service/operator key。
+部署會鎖住 state directory，等待容器就緒、執行 smoke、重建 SOP vectors、跑 AI 評估，全部通過才更新 `release.json`。失敗時回復 current，仍以非零 exit 結束，讓 Actions 正確顯示部署失敗。Previous/current image 需保留在 Docker cache。報告位於 runtime 的 `staging/evaluation-<tag>.json`，不含 service/operator key。
 
 目前 schema 為 idempotent additive 初始化，回復只還原 application images；不刪資料、不還原資料庫。未來破壞性 migration 需要備份與專用 migration 流程。這套 compose 會短暫重建服務，不保證零停機。
 
 ## 一次性的 GitHub 設定
 
 1. 用 GitHub CLI 登入，授權 repo／workflow，建立私人 repository 並 push main。不要把 token 放進 `.env` 或 Git。
-2. 在 repository 註冊 Windows x64 self-hosted runner，加入 label `fabops-local`。本機安裝於聊天 workspace 的 `work/actions-runner`，不在 Git 專案內。
-3. repository Actions variables 設 `FABOPS_STATE_DIR` 為本機專案 `.deploy` 的絕對路徑，再設 `LOCAL_CD_ENABLED=true`。持久 state 必須在 runner checkout 之外，避免 checkout clean 刪除憑證與版本紀錄。
+2. 在 repository 註冊 Windows x64 self-hosted runner，加入 label `fabops-local`。本機安裝於 `C:\Dev\fabops-runtime\actions-runner`，不在 Git 專案內。
+3. repository Actions variables 設 `FABOPS_RUNTIME_DIR=C:\Dev\fabops-runtime`、`FABOPS_STATE_DIR=C:\Dev\fabops-runtime\staging`，再設 `LOCAL_CD_ENABLED=true`。持久 state 在 source checkout 與 runner checkout 之外，避免 checkout clean 刪除憑證與版本紀錄。
 4. 保持 Windows、Docker Desktop、Ollama 和 runner 啟動。重開機後在本專案執行 `scripts/start-runner.ps1`，再到 Actions 手動執行 CI/CD。
 
-這台電腦已下載並校驗 GitHub CLI 2.102.0 與 Windows Actions runner 2.337.0，位於 workspace 的 `work/`。CLI 登入、local commit 都完成後，可在本專案執行以下腳本，建立私人 repository、設定 origin、註冊 runner／variables，再 push main：
+這台電腦已下載並校驗 GitHub CLI 2.102.0 與 Windows Actions runner 2.337.0，位於上述 runtime。CLI 登入、local commit 都完成後，可在本專案執行以下腳本，建立私人 repository、設定 origin、註冊 runner／variables，再 push main：
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\connect-github.ps1 -EnableLocalCd

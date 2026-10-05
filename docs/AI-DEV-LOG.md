@@ -14,6 +14,8 @@
 | 模型品質 | 限制引用 enum、拒絕重複步驟、過濾 ranking metadata、改用 qwen2.5:7b | 早期 3b 曾產生無效引用；7b 曾反覆呼叫工具，新增 evidence-complete 收斂及回歸測試 |
 | Angular 遷移 | 四個 standalone components、Router、Signals store、typed HttpClient、Reactive Forms、CLI build | 依最新職缺需求遷移；修正交接摘要為 POST 與搜尋初始值 race，新增 payload／route／review reset／錯誤恢復／文字 escaping 驗證；人工 review 待完成 |
 | Git／CI/CD | Dockerfiles、GitHub Actions、部署 gate、rollback、runner 啟動腳本 | 實跑 Linux build、Windows deploy、故障自動回復與手動 rollback；修復跨平台 lockfile 與 Piscina advisory；GitHub 遠端執行需另外驗收 |
+| 本機專案規劃與搬移 | 固定 source/runtime、集中 paths.ps1、每個 checkout 自己的 venv、固定 compose name | 保留 .git／keys／模型／DB；核對 development 26 tickets/11 audits、staging 13 tickets/1 audit；新路徑啟動、18 pytest、真實 AI 及 browser 驗收 |
+| 初次搜尋輸入 race | native disabled host attribute 與 Reactive Forms 就緒流程 | 搬移驗收捕捉舊有偶發覆蓋輸入；新增十次立即輸入的回歸，四個 mock 與真實 browser 修正後通過 |
 
 人工 code review 建議依序完成：
 

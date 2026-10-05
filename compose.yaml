@@ -1,3 +1,5 @@
+# Stable name preserves the existing fabops-mvp_pgdata volume across checkout moves.
+name: fabops-mvp
 services:
   postgres:
     image: pgvector/pgvector:pg16

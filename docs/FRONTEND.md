@@ -51,7 +51,7 @@ Remove-Item Env:FABOPS_PROXY_LIVE
 
 元件使用 OnPush 與 Signals，異步請求完成後以 signal.set／update 通知畫面，不依賴 Zone.js。HTTP Observable 透過 firstValueFrom 等待一次 API 結果。
 
-搜尋表單使用 non-nullable FormControl／FormGroup、required／maxLength validators，valueChanges 透過 takeUntilDestroyed 自動清理訂閱。查詢欄位在 afterNextRender 完成控制項綁定後才啟用，確保快速切換頁面後的首次輸入不會被初始化覆蓋；測試會直接核對 POST payload。
+搜尋表單使用 non-nullable FormControl／FormGroup、required／maxLength validators，valueChanges 透過 takeUntilDestroyed 自動清理訂閱。InitiallyDisabledDirective 在 DOM 建立時就加上 native disabled，避免 FormControlName 尚未綁定前的輸入空窗；afterNextRender 完成後透過 control.enable() 移除 disabled。回歸測試連續切頁十次、立即輸入，直接核對 POST payload 與 textbox 值。
 
 切換功能頁面保留調查結果與審查勾選；切換另一個事故或開始新調查會清除勾選。核准後更新畫面、工單與 audit。引用按鈕只定位來源 DOM，不改變目前 route。
 

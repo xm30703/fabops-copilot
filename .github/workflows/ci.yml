@@ -150,6 +150,7 @@ jobs:
       - name: Deploy and require real Ollama RAG and agent checks
         env:
           FABOPS_STATE_DIR: ${{ vars.FABOPS_STATE_DIR }}
+          FABOPS_RUNTIME_DIR: ${{ vars.FABOPS_RUNTIME_DIR }}
         run: |
           if (-not $env:FABOPS_STATE_DIR) { throw 'Configure the persistent FABOPS_STATE_DIR repository variable first' }
           .\scripts\deploy.ps1 -ImagePrefix 'ghcr.io/${{ github.repository }}' -ImageTag '${{ github.sha }}' -StateDirectory $env:FABOPS_STATE_DIR -Pull

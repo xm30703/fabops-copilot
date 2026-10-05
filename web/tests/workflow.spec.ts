@@ -1,4 +1,28 @@
 import { test, expect } from '@playwright/test';
+test('first input immediately after navigation is submitted without initialization reset', async ({ page }) => {
+  test.skip(process.env.FABOPS_LIVE === '1', 'Mock regression test');
+  await page.route('**/api/**', async route => {
+    const path = new URL(route.request().url()).pathname;
+    const data: Record<string, unknown> = {
+      '/api/health': { provider: 'offline', dependencies: { domain: true } },
+      '/api/incidents': [], '/api/machines': [], '/api/tickets': [], '/api/audit': [],
+      '/api/search': { mode: 'lexical-postgres', evidence: [] },
+    };
+    await route.fulfill({ json: data[path] ?? {} });
+  });
+  await page.goto('/#/audit');
+  for (let index = 0; index < 10; index++) {
+    await page.getByRole('link', { name: '知識檢索' }).click();
+    const query = `temperature sensor calibration ${index}`;
+    const input = page.getByRole('textbox', { name: '搜尋 SOP' });
+    await input.fill(query);
+    const response = page.waitForResponse(r => r.url().endsWith('/api/search'));
+    await page.getByRole('button', { name: '搜尋', exact: true }).click();
+    expect((await response).request().postDataJSON()).toEqual({ query });
+    await expect(input).toHaveValue(query);
+    await page.getByRole('link', { name: '工單與稽核' }).click();
+  }
+});
 test('operator sees evidence and must confirm before approval (mocked API contract)',async({page})=>{
   test.skip(process.env.FABOPS_LIVE === '1', 'Use real service workflow in live mode');
   const incident={id:'INC-1001',machineId:'ETCH-07',severity:'P1',title:'真空壓力異常',description:'Pressure 85 mTorr',status:'open'};

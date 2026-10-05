@@ -1,6 +1,7 @@
 param([string]$RunnerDirectory)
 $ErrorActionPreference = 'Stop'
-if (-not $RunnerDirectory) { $RunnerDirectory = Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) '..\work\actions-runner' }
+. (Join-Path $PSScriptRoot 'paths.ps1')
+if (-not $RunnerDirectory) { $RunnerDirectory = Join-Path $runtimeRoot 'actions-runner' }
 $RunnerDirectory = [IO.Path]::GetFullPath($RunnerDirectory)
 $executable = Join-Path $RunnerDirectory 'bin\Runner.Listener.exe'
 if (-not (Test-Path -LiteralPath (Join-Path $RunnerDirectory '.runner'))) { throw 'Register this runner with GitHub before starting it.' }

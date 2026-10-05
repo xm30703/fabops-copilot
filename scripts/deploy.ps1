@@ -7,8 +7,8 @@ param(
     [switch]$Rollback
 )
 $ErrorActionPreference = 'Stop'
-$projectRoot = Split-Path $PSScriptRoot -Parent
-if (-not $StateDirectory) { $StateDirectory = Join-Path $projectRoot '.deploy' }
+. (Join-Path $PSScriptRoot 'paths.ps1')
+if (-not $StateDirectory) { $StateDirectory = Join-Path $runtimeRoot 'staging' }
 $StateDirectory = [IO.Path]::GetFullPath($StateDirectory)
 New-Item -ItemType Directory -Force -Path $StateDirectory | Out-Null
 $lock = [IO.File]::Open((Join-Path $StateDirectory 'deployment.lock'), 'OpenOrCreate', 'ReadWrite', 'None')

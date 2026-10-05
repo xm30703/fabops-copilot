@@ -10,17 +10,20 @@
 
 - 已實作：四個 Angular 頁面、.NET domain API／schema、模型自主選工具的 bounded agent、真實 MCP client/server、SOP chunking／embedding／pgvector 檢索、Ticket 草稿與核准、交接摘要、tracing、測試及 CI workflow。
 - 已驗證：Windows PowerShell 5.1 啟動、Angular production build、標準 .NET build／8 個 xUnit、18 個 pytest（含 live DB 核准與 MCP 協定）、真實 Ollama／pgvector 三事故評估、桌面與手機的 live Playwright 核准流程、跨三服務的 Jaeger trace，以及 k6 本機讀取 API 測試。
-- 本機 Docker staging 已實際部署，通過真實 AI 驗收、故障版本自動回復與手動 rollback。GitHub Actions 的 CI／image publish／本機 CD workflows 已建立；GitHub 推送與 runner 註冊待 CLI 帳號授權。
+- 本機 Docker staging 已實際部署，通過真實 AI 驗收、故障版本自動回復與手動 rollback。GitHub Actions 的 CI／image publish／本機 CD workflows 已建立；遠端實際執行結果記於驗證紀錄。
 
 詳見 [驗證紀錄](docs/VALIDATION.md)。`artifacts/live-workflow-*.png` 是真實本機服務截圖；`workflow-*.png` 是較早的 mock API 測試。
 
 ## 第一步：本機啟動
 
-這台電腦已準備 Node 24、Python 3.12 venv、下載並校驗的 .NET 8.0.425 SDK，以及 Ollama portable 0.35.1。後兩者位於本聊天 workspace 的 `work/tools/`，bootstrap 會自動偵測。本機模型為 qwen2.5:7b 與 nomic-embed-text。
+本機 Git 專案位於 `C:\Dev\fabops-copilot`；工具、模型與部署狀態位於 `C:\Dev\fabops-runtime`。不依賴聊天目錄。完整目錄規劃與搬移驗證見 [本機環境](docs/LOCAL-SETUP.md)。
+
+這台電腦已準備 Node 24、Python 3.12、下載並校驗的 .NET 8.0.425 SDK 與 Ollama portable 0.35.1。本機模型為 qwen2.5:7b 與 nomic-embed-text。Bootstrap 為目前 checkout 建立獨立 `.venv`。
 
 在 **Windows PowerShell 5.1** 執行，工作目錄設為本 README 所在資料夾；不需要另外安裝 PowerShell 7：
 
 ```powershell
+Set-Location C:\Dev\fabops-copilot
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\bootstrap.ps1
 ```
 
@@ -38,7 +41,7 @@ Offline 使用 PostgreSQL lexical search 與固定流程，不是自主 AI Agent
 
 服務已啟動時先執行 scripts/stop.ps1 再啟動。停止腳本只結束 PID、執行檔與啟動時間吻合的本專案程序及其子程序，並保留資料庫與模型。
 
-在其他電腦使用：安裝 Node 24、Python 3.12、.NET 8 SDK、Docker Desktop 和 Ollama，然後同樣執行 bootstrap。腳本優先使用本 workspace portable 工具，否則使用系統工具。日誌與 PID 位於 `artifacts/`；`.env`、模型、套件及日誌不應提交 Git。
+在其他電腦使用：clone 專案，安裝 Node 24、Python 3.12、.NET 8 SDK、Docker Desktop 和 Ollama，然後同樣執行 bootstrap。腳本優先使用 sibling `fabops-runtime` 的 portable 工具，否則使用系統工具；可用 `FABOPS_RUNTIME_DIR` 指定 runtime 位置。日誌與 PID 位於 `artifacts/`；`.env`、模型、套件及日誌不應提交 Git。
 
 停止服務（保留資料庫與模型）：
 

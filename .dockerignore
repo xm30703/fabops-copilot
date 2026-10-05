@@ -1,9 +1,9 @@
 .git
+.venv
 .env
 .env.*
 .deploy
 .tools
-.venv
 artifacts
 **/node_modules
 **/dist

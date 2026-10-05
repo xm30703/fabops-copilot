@@ -6,14 +6,13 @@ param(
     [switch]$EnableLocalCd
 )
 $ErrorActionPreference = 'Stop'
-$projectRoot = Split-Path $PSScriptRoot -Parent
-$workspaceRoot = Split-Path (Split-Path $projectRoot -Parent) -Parent
+. (Join-Path $PSScriptRoot 'paths.ps1')
 if ($Owner -notmatch '^[a-zA-Z0-9-]+$' -or $Repository -notmatch '^[a-zA-Z0-9_.-]+$') { throw 'Invalid GitHub owner or repository name.' }
 if (-not $GitHubCli) {
-    $portable = Join-Path $workspaceRoot 'work\tools\gh\bin\gh.exe'
+    $portable = Join-Path $runtimeRoot 'tools\gh\bin\gh.exe'
     if (Test-Path -LiteralPath $portable) {
         $GitHubCli = $portable
-        $env:GH_CONFIG_DIR = Join-Path $workspaceRoot 'work\gh-config'
+        $env:GH_CONFIG_DIR = Join-Path $runtimeRoot 'gh-config'
     } else { $GitHubCli = (Get-Command gh.exe -ErrorAction Stop).Source }
 }
 function Invoke-Gh {
@@ -52,7 +51,7 @@ if ((Invoke-Git @('remote')) -contains 'origin') {
     Invoke-Git @('remote','add','origin',$remoteUrl)
 }
 if ($EnableLocalCd) {
-    if (-not $RunnerDirectory) { $RunnerDirectory = Join-Path $workspaceRoot 'work\actions-runner' }
+    if (-not $RunnerDirectory) { $RunnerDirectory = Join-Path $runtimeRoot 'actions-runner' }
     $RunnerDirectory = [IO.Path]::GetFullPath($RunnerDirectory)
     $runnerConfig = Join-Path $RunnerDirectory '.runner'
     if (-not (Test-Path -LiteralPath (Join-Path $RunnerDirectory 'config.cmd'))) { throw 'Download and verify the official Windows Actions runner first.' }
@@ -68,7 +67,8 @@ if ($EnableLocalCd) {
         } finally { Pop-Location; $registration = $null }
     }
     Invoke-Gh @('api','--method','PUT',"repos/$fullName/environments/local-staging",'--silent')
-    Invoke-Gh @('variable','set','FABOPS_STATE_DIR','--repo',$fullName,'--body',(Join-Path $projectRoot '.deploy'))
+    Invoke-Gh @('variable','set','FABOPS_RUNTIME_DIR','--repo',$fullName,'--body',$runtimeRoot)
+    Invoke-Gh @('variable','set','FABOPS_STATE_DIR','--repo',$fullName,'--body',(Join-Path $runtimeRoot 'staging'))
     & (Join-Path $PSScriptRoot 'start-runner.ps1') -RunnerDirectory $RunnerDirectory
     Invoke-Gh @('variable','set','LOCAL_CD_ENABLED','--repo',$fullName,'--body','true')
 }

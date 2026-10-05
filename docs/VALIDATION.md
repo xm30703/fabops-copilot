@@ -72,4 +72,14 @@ GitHub hosted CI／runner 自動部署、cloud staging、正式企業系統串�
 - 用另一套暫時的 Docker project／volume 實跑 CI image job 的 offline 流程：容器 readiness、smoke、lexical ingestion、三事故 baseline evaluation 全部通過，之後只清除該暫時環境。
 - 已建立 main 分支與本地 commits，Git 工作目錄乾淨。修正原 sandbox 建立的 repository 根目錄／.git ownership，使用者可正常執行 Git，不需全域 safe.directory exception。82 個 source files 的已知本機 secrets／private key／GitHub token scan 通過，環境設定與 evidence 不進版控。
 
-原始證據在忽略版控的 `artifacts/container-build.log`、`staging-deploy.log`、`automatic-recovery.log`、`second-release.log`、`manual-rollback.log`，以及 `.deploy/evaluation-*.json`。
+原始證據在忽略版控的 `artifacts/container-build.log`、`staging-deploy.log`、`automatic-recovery.log`、`second-release.log`、`manual-rollback.log`。部署評估原在 `.deploy/evaluation-*.json`，2026-10-05 搬移時完整保留至 `C:\Dev\fabops-runtime\staging`。
+
+## 2026-10-05：固定開發目錄搬移
+
+- Source checkout／.git 已搬到 C:\Dev\fabops-copilot，完整保留既有 commits；git fsck 無損壞。
+- 工具、模型、瀏覽器、GitHub CLI 設定、runner、部署 state 搬至 C:\Dev\fabops-runtime；各 script 經 paths.ps1 解析，沒有聊天目錄依賴。GitHub CLI 登入在新位置仍有效。
+- 開發 compose 固定 name=fabops-mvp；搬移前後 development 的 26 個 ticket IDs／11 audits，staging 的 13 個 ticket IDs／1 audit 完全一致，保留資料 volume 及 credentials。
+- 以 Windows PowerShell 5.1 在新路徑 bootstrap；重新建立 .venv，Python／API／Ollama 皆從 C:\Dev 執行。Angular build、xUnit 8 passed、pytest 17 passed/1 skipped。
+- 新路徑 live verification：pytest 全 18 passed（含 DB 核准／重放），三事故實際 ollama-agent 11.7／10.5／11.6 秒，RAG 與合法引用通過。
+- 初次 browser 驗收發現原搜尋欄位尚未接上 FormControlName 時可提前輸入，預設值會覆蓋使用者 query。增加 native initial-disabled directive，Angular build 321.61 kB、四個 mock cases（含十次切頁立即輸入）passed；真實 browser 調查／核准／搜尋／交接重新 1 passed，22.1 秒。保留失敗與修正後證據。
+- GitHub hosted workflow 與 CD 的遠端執行結果需另行記錄；以上屬實際本機搬移驗收。
