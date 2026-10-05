@@ -1,0 +1,18 @@
+{
+  "machines": [
+    {"id":"ETCH-07","name":"Synthetic etch chamber","state":"ALARM","line":"SIM-LINE-A","telemetry":{"pressure_mTorr":85,"pressure_limit_mTorr":50,"consecutive_alarms":3},"observedAt":"2026-10-04T12:00:00Z"},
+    {"id":"OVEN-02","name":"Synthetic oven","state":"WARNING","line":"SIM-LINE-B","telemetry":{"temperature_C":218,"target_C":200,"calibration_overdue_days":9},"observedAt":"2026-10-04T12:00:00Z"},
+    {"id":"MES-GW","name":"Synthetic MES gateway","state":"DEGRADED","line":"SIM-IT","telemetry":{"queue_depth":4200,"p95_latency_ms":8200,"retry_rate_percent":24},"observedAt":"2026-10-04T12:00:00Z"}
+  ],
+  "incidents": [
+    {"id":"INC-1001","machineId":"ETCH-07","severity":"P1","title":"真空壓力異常 Vacuum pressure","description":"Vacuum pressure 85 mTorr exceeds threshold 50 for 3 readings after maintenance. Lot SIM-L104 on hold.","status":"open"},
+    {"id":"INC-1002","machineId":"OVEN-02","severity":"P2","title":"溫度飄移 Temperature drift","description":"Temperature 218 C vs target 200 C; sensor calibration overdue by 9 days. Lot SIM-L105 awaiting review.","status":"open"},
+    {"id":"INC-1003","machineId":"MES-GW","severity":"P1","title":"MES 訊息積壓 Queue backlog","description":"Queue depth 4200; p95 latency 8200 ms; upstream timeout and retry rate 24 percent.","status":"open"}
+  ],
+  "maintenance": [
+    {"id":"MT-001","machineId":"ETCH-07","date":"2026-10-03","description":"Synthetic pump seal maintenance; post-maintenance verification record not attached.","owner":"Demo Equipment Team"},
+    {"id":"MT-002","machineId":"OVEN-02","date":"2026-09-01","description":"Synthetic sensor calibration; next scheduled calibration overdue.","owner":"Demo Process Team"},
+    {"id":"MT-003","machineId":"MES-GW","date":"2026-10-02","description":"Synthetic retry configuration changed from 3 to 8 attempts.","owner":"Demo IT Team"}
+  ],
+  "shifts": [{"id":"SHIFT-DEMO","name":"Synthetic night shift","start":"2026-10-04T08:00:00Z","end":"2026-10-04T20:00:00Z","owner":"Demo Operator","incidentIds":["INC-1001","INC-1002","INC-1003"]}]
+}

@@ -1,0 +1,16 @@
+.git
+.env
+.env.*
+.deploy
+.tools
+.venv
+artifacts
+**/node_modules
+**/dist
+**/.angular
+**/bin
+**/obj
+**/__pycache__
+**/test-results
+**/playwright-report
+**/*.log

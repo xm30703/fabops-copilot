@@ -1,0 +1,65 @@
+name: fabops-staging
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: fabops
+      POSTGRES_USER: fabops
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set a staging DB password}
+    volumes: ["staging-pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fabops -d fabops"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  jaeger:
+    image: jaegertracing/all-in-one:1.76.0
+    restart: unless-stopped
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports: ["127.0.0.1:${JAEGER_PORT:-16687}:16686"]
+  domain-api:
+    image: ${IMAGE_PREFIX:-fabops}/domain-api:${IMAGE_TAG:?Set an immutable version tag}
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      DB_CONNECTION: Host=postgres;Port=5432;Database=fabops;Username=fabops;Password=${DB_PASSWORD}
+      SERVICE_KEY: ${SERVICE_KEY:?Set a staging service key}
+      OPERATOR_KEY: ${OPERATOR_KEY:?Set a distinct staging operator key}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+  gateway:
+    image: ${IMAGE_PREFIX:-fabops}/gateway:${IMAGE_TAG:?Set an immutable version tag}
+    build:
+      context: .
+      dockerfile: agent/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      domain-api: { condition: service_started }
+    environment:
+      DOMAIN_API: http://domain-api:5080
+      SERVICE_KEY: ${SERVICE_KEY}
+      OPERATOR_KEY: ${OPERATOR_KEY}
+      AI_PROVIDER: ${AI_PROVIDER:-ollama}
+      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
+      OLLAMA_CHAT_MODEL: ${OLLAMA_CHAT_MODEL:-qwen2.5:7b}
+      OLLAMA_EMBED_MODEL: ${OLLAMA_EMBED_MODEL:-nomic-embed-text}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      AGENT_PORT: ${APP_PORT:-4319}
+      JAEGER_UI_URL: http://127.0.0.1:${JAEGER_PORT:-16687}
+    ports: ["127.0.0.1:${APP_PORT:-4319}:4317"]
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import json,urllib.request; h=json.load(urllib.request.urlopen('http://127.0.0.1:4317/api/health',timeout=5)); assert h['dependencies']['domain']"]
+      interval: 10s
+      timeout: 8s
+      retries: 15
+      start_period: 15s
+volumes:
+  staging-pgdata:

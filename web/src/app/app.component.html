@@ -1,0 +1,35 @@
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark">F</span><div>FabOps <span class="brand-sub">COPILOT / LAB</span></div></div>
+    <div class="nav-label">WORKSPACE</div>
+    <nav aria-label="功能導覽">
+      @for (item of navigation; track item.path) {
+        <a class="nav-item" [routerLink]="item.path" routerLinkActive="active" ariaCurrentWhenActive="page">
+          {{ item.icon }} <span>{{ item.label }}</span><small>{{ item.number }}</small>
+        </a>
+      }
+    </nav>
+    <div class="sidebar-foot"><span class="dot"></span> LOCAL DEMO <p>Angular · .NET · MCP · pgvector</p><span class="muted">全合成資料 / 無設備控制</span></div>
+  </aside>
+  <main>
+    <header>
+      <div class="breadcrumb">FABOPS LAB <span>/</span> {{ page().breadcrumb }}</div>
+      <button class="refresh" [disabled]="store.busy()" (click)="store.refresh()">↻ 檢查服務</button>
+    </header>
+    <div class="page">
+      <div class="page-heading">
+        <div><div class="eyebrow">MANUFACTURING INTELLIGENCE</div><h1>{{ page().title }}</h1><p>讀取觀測事實、檢索 SOP、審查處置建議。由人員掌握最後的核准。</p></div>
+        <span class="synthetic-badge">SYNTHETIC DATA</span>
+      </div>
+      @if (store.error()) { <div role="alert" class="error">{{ store.error() }}</div> }
+      <div class="metrics">
+        <div><span>OPEN INCIDENTS</span><strong>{{ store.incidents().length.toString().padStart(2, '0') }}</strong><small>模擬中的未結事故</small></div>
+        <div><span>PRIORITY ONE</span><strong class="orange">{{ store.priorityCount().toString().padStart(2, '0') }}</strong><small>需值班工程師關注</small></div>
+        <div><span>SERVICE READINESS</span><strong>{{ store.liveCount() }}<em> / 4</em></strong><small>API · Ollama · Chat · Embedding</small></div>
+        <div><span>INFERENCE MODE</span><strong class="model-name">{{ store.health()?.provider === 'ollama' ? 'Ollama' : 'Offline' }}</strong><small>{{ store.run()?.mode || '每次執行顯示實際模式' }}</small></div>
+      </div>
+      <router-outlet />
+      <footer><span>FabOps Copilot · Portfolio MVP</span><span>全部資料虛構。建議需人工驗證，僅操作模擬工單。</span></footer>
+    </div>
+  </main>
+</div>

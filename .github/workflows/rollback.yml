@@ -1,0 +1,23 @@
+name: Roll back local staging
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rollback:
+    if: github.ref == 'refs/heads/main' && vars.LOCAL_CD_ENABLED == 'true'
+    runs-on: [self-hosted, Windows, X64, fabops-local]
+    environment: local-staging
+    timeout-minutes: 25
+    concurrency:
+      group: local-staging
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Restore previous verified release
+        shell: powershell
+        env:
+          FABOPS_STATE_DIR: ${{ vars.FABOPS_STATE_DIR }}
+        run: |
+          if (-not $env:FABOPS_STATE_DIR) { throw 'Configure FABOPS_STATE_DIR first' }
+          .\scripts\deploy.ps1 -StateDirectory $env:FABOPS_STATE_DIR -Rollback

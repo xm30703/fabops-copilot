@@ -1,0 +1,158 @@
+name: CI and local CD
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env: { POSTGRES_USER: fabops, POSTGRES_PASSWORD: fabops-local-only, POSTGRES_DB: fabops }
+        ports: ['5439:5432']
+        options: --health-cmd "pg_isready -U fabops" --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      AI_PROVIDER: offline
+      SERVICE_KEY: ci-service-only
+      OPERATOR_KEY: ci-operator-only
+      FABOPS_INTEGRATION: '1'
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with: { dotnet-version: '8.0.x' }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: { python-version: '3.12' }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: '24', cache: npm, cache-dependency-path: web/package-lock.json }
+      - run: pip install -r requirements-lock.txt
+      - run: dotnet test tests/FabOps.Tests.csproj --configuration Release
+      - name: Angular build and browser tests
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+          npx playwright install --with-deps chromium
+          npm run test:e2e
+      - name: Start domain API and ingest synthetic knowledge
+        run: |
+          mkdir -p artifacts
+          dotnet api/bin/Release/net8.0/FabOps.Api.dll > artifacts/domain.log 2>&1 &
+          python - <<'PY'
+          import time, urllib.request
+          for _ in range(60):
+              try:
+                  urllib.request.urlopen('http://127.0.0.1:5080/health/ready',timeout=2)
+                  break
+              except Exception: time.sleep(1)
+          else: raise SystemExit('Domain API readiness timed out')
+          PY
+          python -m agent.ingest --lexical-only
+      - run: python -m pytest tests -q
+      - name: Gateway release smoke and live baseline evaluation
+        run: |
+          python -m uvicorn agent.app:app --host 127.0.0.1 --port 4317 > artifacts/gateway.log 2>&1 &
+          python - <<'PY'
+          import time, urllib.request
+          for _ in range(60):
+              try:
+                  urllib.request.urlopen('http://127.0.0.1:4317/api/health',timeout=5)
+                  break
+              except Exception: time.sleep(1)
+          else: raise SystemExit('Gateway startup timed out')
+          PY
+          python scripts/smoke.py
+          python scripts/evaluate.py --agent
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with: { name: ci-evidence, path: artifacts/, retention-days: 14 }
+
+  images:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+      IMAGE_TAG: ${{ github.sha }}
+      AI_PROVIDER: offline
+      APP_PORT: '4319'
+      DB_PASSWORD: ci-container-only
+      SERVICE_KEY: ci-container-service
+      OPERATOR_KEY: ci-container-operator
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build and verify both release images
+        run: |
+          docker compose -f compose.staging.yaml build
+          docker compose -f compose.staging.yaml up -d --wait --wait-timeout 180
+          docker compose -f compose.staging.yaml exec -T gateway python scripts/smoke.py
+          docker compose -f compose.staging.yaml exec -T gateway python -m agent.ingest --lexical-only
+          docker compose -f compose.staging.yaml exec -T gateway python scripts/evaluate.py --agent
+          mkdir -p artifacts
+          docker compose -f compose.staging.yaml cp gateway:/app/artifacts/live-evaluation.json artifacts/container-evaluation.json
+      - name: Publish tested commit images to GHCR
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker push "$IMAGE_PREFIX/domain-api:$IMAGE_TAG"
+          docker push "$IMAGE_PREFIX/gateway:$IMAGE_TAG"
+      - name: Save container diagnostics
+        if: always()
+        run: |
+          mkdir -p artifacts
+          docker compose -f compose.staging.yaml logs --no-color > artifacts/containers.log
+          docker compose -f compose.staging.yaml down
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with: { name: container-evidence, path: artifacts/, retention-days: 14 }
+
+  deploy:
+    needs: images
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.LOCAL_CD_ENABLED == 'true'
+    runs-on: [self-hosted, Windows, X64, fabops-local]
+    environment: local-staging
+    timeout-minutes: 25
+    concurrency:
+      group: local-staging
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: read
+    defaults:
+      run:
+        shell: powershell
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Authenticate image download
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $env:DOCKER_CONFIG = Join-Path $env:RUNNER_TEMP 'fabops-docker-auth'
+          "DOCKER_CONFIG=$env:DOCKER_CONFIG" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          $env:GHCR_TOKEN | docker login ghcr.io -u '${{ github.actor }}' --password-stdin
+          if ($LASTEXITCODE -ne 0) { throw 'GHCR authentication failed' }
+      - name: Deploy and require real Ollama RAG and agent checks
+        env:
+          FABOPS_STATE_DIR: ${{ vars.FABOPS_STATE_DIR }}
+        run: |
+          if (-not $env:FABOPS_STATE_DIR) { throw 'Configure the persistent FABOPS_STATE_DIR repository variable first' }
+          .\scripts\deploy.ps1 -ImagePrefix 'ghcr.io/${{ github.repository }}' -ImageTag '${{ github.sha }}' -StateDirectory $env:FABOPS_STATE_DIR -Pull
+      - name: Clear job registry credentials
+        if: always()
+        run: docker logout ghcr.io

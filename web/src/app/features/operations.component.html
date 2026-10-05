@@ -1,0 +1,73 @@
+<div class="workspace-grid">
+  <section class="panel incidents">
+    <div class="panel-heading"><h2>事件佇列</h2><span>{{ store.incidents().length }} ACTIVE</span></div>
+    @if (!store.incidents().length) { <div class="empty">API 尚未就緒。請先啟動資料庫與 .NET API。</div> }
+    @for (item of store.incidents(); track item.id) {
+      <button class="incident-card" [class.selected]="item.id === store.selected()" [disabled]="store.busy()" (click)="store.choose(item.id)">
+        <div><span class="priority" [class.p1]="item.severity === 'P1'" [class.p2]="item.severity === 'P2'">{{ item.severity }}</span><span class="mono">{{ item.id }}</span></div>
+        <h3>{{ item.title }}</h3><p>{{ item.machineId }} <span>→</span> {{ item.status }}</p>
+      </button>
+    }
+    <div class="queue-note">人工資料情境：真空異常、溫度飄移、MES 訊息積壓。</div>
+  </section>
+  <section class="panel investigation">
+    <div class="panel-heading"><h2>調查工作台</h2><span class="mono">{{ store.selected() }}</span></div>
+    @if (store.current(); as current) {
+      <div class="case-heading"><h2>{{ current.title }}</h2><p>{{ current.description }}</p></div>
+      <div class="telemetry">
+        @for (reading of store.telemetry(); track reading[0]) {
+          <div><span>{{ reading[0] }}</span><strong>{{ reading[1] }}</strong></div>
+        }
+      </div>
+      <label for="question">調查目標</label>
+      <textarea id="question" [ngModel]="store.question()" (ngModelChange)="store.question.set($event)" rows="3" maxlength="1000" [disabled]="store.busy()"></textarea>
+      <div class="action-row"><span>模型選工具 · 最多 8 輪／16 次呼叫</span><button class="primary" [disabled]="store.busy() || !store.question().trim()" (click)="store.investigate()">{{ store.busy() ? '調查執行中…' : '開始調查' }} <span>↗</span></button></div>
+    }
+    @if (store.busy()) { <div class="progress" role="status"><span class="pulse"></span> 正在處理請求。本機推論可能需要數分鐘。</div> }
+    @if (store.run(); as run) {
+      <div class="result">
+        <div class="result-title"><h3>調查結果</h3><span class="mode" [class.fallback]="run.mode.startsWith('offline')">{{ run.mode }}</span></div>
+        <p>{{ run.findings.summary }}</p>
+        <div class="hypothesis"><span>未確認的假設</span><p>{{ run.findings.hypothesis }}</p></div>
+        <ol class="steps">
+          @for (step of run.findings.steps; track $index) {
+            <li><p>{{ step.text }}</p>
+              @for (cite of step.citations; track cite) { <button type="button" class="citation" (click)="showSource(cite)">{{ cite }}</button> }
+            </li>
+          }
+        </ol>
+        <details><summary>不確定性與限制</summary>
+          @for (text of run.findings.uncertainties; track $index) { <p>{{ text }}</p> }
+          @for (warning of run.warnings; track $index) { <p class="orange">{{ warning }}</p> }
+        </details>
+        @if (run.ticket; as ticket) {
+          <div class="approval">
+            <div><span class="eyebrow">HUMAN REVIEW REQUIRED</span><h3>{{ store.approved() ? '模擬工單已核准' : 'Ticket 草稿待審查' }}</h3><p class="mono">{{ ticket.id }}</p></div>
+            @if (!store.approved()) {
+              <label class="checkbox"><input type="checkbox" [ngModel]="store.reviewed()" (ngModelChange)="store.reviewed.set($event)" [disabled]="store.busy()">我已核對觀測數值、引用來源與建議內容</label>
+              <button class="primary" [disabled]="!store.reviewed() || store.busy()" (click)="store.approve()">核准模擬工單</button>
+            } @else { <span class="success">✓ 已記錄核准與稽核事件</span> }
+          </div>
+        } @else { <div class="queue-note">模型未建立草稿，或檢索證據不足；請先審查結果。</div> }
+      </div>
+    }
+  </section>
+</div>
+@if (store.run(); as run) {
+  <div class="evidence-grid">
+    <section class="panel"><div class="panel-heading"><h2>來源證據</h2><span>{{ run.evidence.length }} CHUNKS</span></div>
+      @for (source of run.evidence; track source.id) {
+        <article [id]="source.id" class="source"><span class="mono">{{ source.id }}</span><h3>{{ source.title }}</h3><p>{{ source.content }}</p></article>
+      }
+    </section>
+    <section class="panel"><div class="panel-heading"><h2>MCP 執行紀錄</h2><span>{{ (run.durationMs / 1000).toFixed(1) }}s</span></div>
+      <div class="trace">
+        @for (event of run.events; track $index) {
+          <div class="trace-step"><span class="trace-number">{{ $index + 1 }}</span><div><strong>{{ event.tool }}</strong><code>{{ event.arguments | json }}</code><small>{{ event.durationMs }} ms · {{ event.status }}</small></div></div>
+        }
+      </div>
+      <a class="trace-link" [href]="run.traceUrl || ('http://127.0.0.1:16686/trace/' + run.traceId)" target="_blank" rel="noopener">在 Jaeger 檢視 trace ↗</a>
+      <p class="muted mono trace-id">{{ run.traceId }}</p>
+    </section>
+  </div>
+}
