@@ -17,7 +17,9 @@ foreach ($image in @('domain-api', 'gateway')) {
     if ($package.name -ne "$repoName/$image") { throw "Unexpected package metadata for $image." }
 }
 
-# Send ASCII token bytes directly to stdin, independent of PowerShell's pipeline encoding.
+# .NET Framework initializes Process.StandardInput from Console.InputEncoding.
+# The runner's UTF-8 encoding can emit a BOM before the token, even when writing BaseStream.
+$previousInputEncoding = [Console]::InputEncoding
 $start = New-Object Diagnostics.ProcessStartInfo
 $start.FileName = (Get-Command docker.exe -ErrorAction Stop).Source
 $start.Arguments = "login ghcr.io -u $RegistryUser --password-stdin"
@@ -27,10 +29,14 @@ $start.RedirectStandardInput = $true
 $process = New-Object Diagnostics.Process
 $process.StartInfo = $start
 try {
+    [Console]::InputEncoding = New-Object Text.UTF8Encoding($false)
+    Write-Host "Registry stdin: UTF-8 without BOM (host preamble: $($previousInputEncoding.GetPreamble().Length) bytes)."
     [void]$process.Start()
-    $bytes = [Text.Encoding]::ASCII.GetBytes($env:GHCR_TOKEN)
-    $process.StandardInput.BaseStream.Write($bytes, 0, $bytes.Length)
+    $process.StandardInput.Write($env:GHCR_TOKEN)
     $process.StandardInput.Close()
     $process.WaitForExit()
     if ($process.ExitCode -ne 0) { throw 'GHCR authentication failed.' }
-} finally { $process.Dispose() }
+} finally {
+    [Console]::InputEncoding = $previousInputEncoding
+    $process.Dispose()
+}
