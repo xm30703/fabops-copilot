@@ -34,8 +34,12 @@ $remoteUrl = "https://github.com/$fullName.git"
 $helper = '!'
 if ($env:GH_CONFIG_DIR) { $helper += "GH_CONFIG_DIR='" + $env:GH_CONFIG_DIR.Replace('\','/').Replace("'", "'\''") + "' " }
 $helper += "'" + $GitHubCli.Replace('\','/').Replace("'", "'\''") + "' auth git-credential"
-Invoke-Git @('config','--local','credential.helper','')
-Invoke-Git @('config','--local','--add','credential.helper',$helper)
+Invoke-Git @('config','--local','--replace-all','credential.helper',$helper)
+# PowerShell 5.1 drops empty native arguments. Write the Git helper reset directly,
+# before the encoded helper entry, so inherited helpers cannot open another login.
+$gitConfig = Join-Path $projectRoot '.git\config'
+$existingConfig = [IO.File]::ReadAllText($gitConfig)
+[IO.File]::WriteAllText($gitConfig, "[credential]`n`thelper =`n" + $existingConfig, [Text.UTF8Encoding]::new($false))
 if ((Invoke-Git @('remote')) -contains 'origin') {
     if ((Invoke-Git @('remote','get-url','origin')) -ne $remoteUrl) { throw 'Existing origin differs; no remote was changed.' }
 } else {
