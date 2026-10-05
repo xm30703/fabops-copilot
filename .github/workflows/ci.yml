@@ -88,6 +88,7 @@ jobs:
     env:
       IMAGE_PREFIX: ghcr.io/${{ github.repository }}
       IMAGE_TAG: ${{ github.sha }}
+      SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}
       AI_PROVIDER: offline
       APP_PORT: '4319'
       DB_PASSWORD: ci-container-only
@@ -145,8 +146,7 @@ jobs:
         run: |
           $env:DOCKER_CONFIG = Join-Path $env:RUNNER_TEMP 'fabops-docker-auth'
           "DOCKER_CONFIG=$env:DOCKER_CONFIG" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          $env:GHCR_TOKEN | docker login ghcr.io -u '${{ github.actor }}' --password-stdin
-          if ($LASTEXITCODE -ne 0) { throw 'GHCR authentication failed' }
+          .\scripts\registry-login.ps1 -RegistryUser '${{ github.actor }}' -Repository '${{ github.repository }}'
       - name: Deploy and require real Ollama RAG and agent checks
         env:
           FABOPS_STATE_DIR: ${{ vars.FABOPS_STATE_DIR }}

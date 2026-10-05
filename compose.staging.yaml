@@ -24,6 +24,9 @@ services:
     build:
       context: .
       dockerfile: api/Dockerfile
+      args:
+        SOURCE_URL: ${SOURCE_URL:-https://github.com/xm30703/fabops-copilot}
+        REVISION: ${IMAGE_TAG}
     restart: unless-stopped
     depends_on:
       postgres: { condition: service_healthy }
@@ -37,6 +40,9 @@ services:
     build:
       context: .
       dockerfile: agent/Dockerfile
+      args:
+        SOURCE_URL: ${SOURCE_URL:-https://github.com/xm30703/fabops-copilot}
+        REVISION: ${IMAGE_TAG}
     restart: unless-stopped
     depends_on:
       domain-api: { condition: service_started }

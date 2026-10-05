@@ -7,6 +7,10 @@ COPY api/ api/
 RUN dotnet publish api/FabOps.Api.csproj --configuration Release --no-restore --output /app
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
+ARG SOURCE_URL
+ARG REVISION
+LABEL org.opencontainers.image.source=$SOURCE_URL \
+      org.opencontainers.image.revision=$REVISION
 WORKDIR /app
 COPY --from=build /app/ ./
 ENV ASPNETCORE_URLS=http://0.0.0.0:5080

@@ -6,6 +6,10 @@ COPY web/ ./
 RUN npm run build
 
 FROM python:3.12-slim
+ARG SOURCE_URL
+ARG REVISION
+LABEL org.opencontainers.image.source=$SOURCE_URL \
+      org.opencontainers.image.revision=$REVISION
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
 COPY requirements-lock.txt ./
