@@ -1,0 +1,57 @@
+name: Registry access diagnostic
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  packages: read
+jobs:
+  registry:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: hosted-linux
+            runner: ubuntu-latest
+          - name: local-windows
+            runner: [self-hosted, Windows, X64, fabops-local]
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check package API, registry token exchange, and Docker login
+        shell: python
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY_USER: ${{ github.actor }}
+          SOURCE_REPOSITORY: ${{ github.repository }}
+        run: |
+          import base64, json, os, pathlib, subprocess, urllib.error, urllib.parse, urllib.request
+          token = os.environ['GHCR_TOKEN']
+          repository = os.environ['SOURCE_REPOSITORY']
+          user = os.environ['REGISTRY_USER']
+          owner, repo = repository.split('/')
+          for image in ('domain-api', 'gateway'):
+              package_name = urllib.parse.quote(f'{repo}/{image}', safe='')
+              req = urllib.request.Request(f'https://api.github.com/users/{owner}/packages/container/{package_name}', headers={'Authorization': f'Bearer {token}', 'Accept': 'application/vnd.github+json'})
+              with urllib.request.urlopen(req, timeout=30) as response:
+                  package = json.load(response)
+              print(json.dumps({'name': package['name'], 'visibility': package['visibility'], 'repository': (package.get('repository') or {}).get('full_name')}))
+          basic = base64.b64encode(f'{user}:{token}'.encode()).decode()
+          url = 'https://ghcr.io/token?' + urllib.parse.urlencode({'service': 'ghcr.io', 'scope': f'repository:{repository}/gateway:pull'})
+          req = urllib.request.Request(url, headers={'Authorization': f'Basic {basic}'})
+          try:
+              with urllib.request.urlopen(req, timeout=30) as response:
+                  bearer = json.load(response)
+              print('Registry token exchange: HTTP 200, token present:', bool(bearer.get('token')))
+          except urllib.error.HTTPError as error:
+              print('Registry token exchange: HTTP', error.code)
+          config = pathlib.Path(os.environ['RUNNER_TEMP']) / 'fabops-registry-diagnostic'
+          config.mkdir(exist_ok=True)
+          os.environ['DOCKER_CONFIG'] = str(config)
+          try:
+              subprocess.run(['docker', 'login', 'ghcr.io', '-u', user, '--password-stdin'], input=token.encode('ascii'), check=True)
+              subprocess.run(['docker', 'manifest', 'inspect', f'ghcr.io/{repository}/gateway:748f379a604aad4afddb98396f71c5c87f990416'], stdout=subprocess.DEVNULL, check=True)
+              print('Private manifest read: passed')
+          finally:
+              subprocess.run(['docker', 'logout', 'ghcr.io'], check=False)

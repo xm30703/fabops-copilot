@@ -14,7 +14,7 @@ foreach ($image in @('domain-api', 'gateway')) {
     $packageName = [Uri]::EscapeDataString("$repoName/$image")
     $package = Invoke-RestMethod -Uri "https://api.github.com/users/$owner/packages/container/$packageName" -Headers $headers
     Write-Host "Package $($package.name): $($package.visibility), source $($package.repository.full_name)"
-    if ($package.repository.full_name -ne $Repository) { throw "Package $image is not linked to this repository." }
+    if ($package.name -ne "$repoName/$image") { throw "Unexpected package metadata for $image." }
 }
 
 # Send ASCII token bytes directly to stdin, independent of PowerShell's pipeline encoding.
