@@ -104,3 +104,12 @@ Operator identity 是本機 demo，未實作正式個人帳號／OIDC／RBAC。M
 真正的 byte 問題可用假 token 重現：將 Console.InputEncoding 設為 UTF-8 時，.NET Framework Process.StandardInput 會加上 EF BB BF；BaseStream 寫入也受影響。registry-login.ps1 明確設定無 BOM UTF-8 後再取得 StandardInput，並在結束時還原 host encoding。成功 runner log 確認原 host preamble 為 3 bytes，修正後 Login Succeeded。保留失敗 run，未提高 deploy token 的 packages 權限，也未加入個人 registry token。
 
 此處部署目的地是這台電腦的 Docker staging。Windows、Docker Desktop、Ollama 與 runner 需要運作；雲端模型、cloud application hosting 與正式製造環境仍未部署。只有文件／驗證紀錄的後續 commit 使用 `[skip ci]`，不改變已驗收 application image。
+
+## 2026-10-08：白話教材與公開作品入口
+
+- `docs/learning/index.html` 為可直接用瀏覽器開啟的單檔離線教材。15 課、84 個名詞、20 項職缺對照、30 題面試練習，包含作業／架構／資料／流程與兩張泳道時序圖。29 個程式及文件片段依明列來源擷取；合成 SOP 原文與內容 hash 的段落 ID 可供核對。原始教材與無 npm 相依的 Node builder 一併保存。
+- Chromium 在 1440 px 桌面與 390 px 手機檢查全部 15 課，沒有 JavaScript 錯誤、重複 DOM IDs 或頁面橫向溢出。15 個首要圖解的節點文字均在框內，逐圖視覺檢查完成；另檢查 MCP 逐步泳道、人工核准泳道與手機圖解放大。
+- 互動驗收通過：15 題測驗、事實分類、架構元件點選／鍵盤、名詞視窗、Agent 五情境與可選草稿／讀取順序、RAG 改寫及查無來源、核准未確認／逾期／成功／重放、部署通過／失敗／offline 拒絕／PR 隔離、程式審查練習、30 題篩選與計時、回答與閱讀進度 localStorage、字級及手機選單。核准模擬的 audit 成功一次，重放後仍為一筆。
+- 教材載入與互動過程沒有 HTTP(S) 請求，不需 Docker、API、DB 或 Ollama。所有模型順序、檢索匹配、token 時間與部署狀態是明確標示的教學預設；此次沒有重新執行應用程式的 mock、offline baseline、live DB 或 live AI 驗收，也沒有改動工單、模型、資料庫或部署狀態。既有能力證據仍引用前述 2026-10-05 實跑紀錄。
+- 依使用者明確選擇，FabOps repository 改為 PUBLIC；匿名 GitHub API 存取為 200。公開前檢查 134 個可達歷史 blob：沒有應排除的 `.env`／runtime／模型／runner／raw log 路徑，沒有所檢查的 token／私鑰格式或本機 service/operator/DB credential 命中。此為指定規則檢查，不是完整秘密掃描認證。仍保留 `.gitignore`／`.dockerignore` 與既有 trusted-main 部署限制。
+- 履歷作品網站將 FabOps 放在中英文專案第一項，卡片與案例皆附公開 GitHub 連結；使用原始 1440 × 2340 的合成本機實跑畫面與架構圖。網站 Chromium 驗證六張卡片、五項既有專案內容完整保留、五種篩選、雙語、原圖放大、GitHub 連結、鍵盤與兩種螢幕寬度。新增介紹明列 AI 輔助開發、合成資料、本機 staging 與驗證範圍。

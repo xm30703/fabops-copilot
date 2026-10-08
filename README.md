@@ -14,11 +14,17 @@
 
 詳見 [驗證紀錄](docs/VALIDATION.md)。`artifacts/live-workflow-*.png` 是真實本機服務截圖；`workflow-*.png` 是較早的 mock API 測試。
 
+作品畫面來自本機真實服務驗收，資料全部為合成情境：
+
+![FabOps 本機事故調查、引用與人工核准畫面](docs/portfolio/fabops-live-desktop.png)
+
+想先理解設計，可開啟 [從零到面試教材](docs/learning/README.md)：15 課白話說明、流程與泳道圖、互動演練及 30 題面試追問。下載 `docs/learning/index.html` 後以瀏覽器開啟即可離線學習。
+
 ## 第一步：本機啟動
 
 本機 Git 專案位於 `C:\Dev\fabops-copilot`；工具、模型與部署狀態位於 `C:\Dev\fabops-runtime`。不依賴聊天目錄。完整目錄規劃與搬移驗證見 [本機環境](docs/LOCAL-SETUP.md)。
 
-GitHub repository：[xm30703/fabops-copilot](https://github.com/xm30703/fabops-copilot)（目前為私人 repository）。
+GitHub repository：[xm30703/fabops-copilot](https://github.com/xm30703/fabops-copilot)（公開作品集，2026-10-08 更新）。
 
 這台電腦已準備 Node 24、Python 3.12、下載並校驗的 .NET 8.0.425 SDK 與 Ollama portable 0.35.1。本機模型為 qwen2.5:7b 與 nomic-embed-text。Bootstrap 為目前 checkout 建立獨立 `.venv`。
 
