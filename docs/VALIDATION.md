@@ -113,3 +113,5 @@ Operator identity 是本機 demo，未實作正式個人帳號／OIDC／RBAC。M
 - 教材載入與互動過程沒有 HTTP(S) 請求，不需 Docker、API、DB 或 Ollama。所有模型順序、檢索匹配、token 時間與部署狀態是明確標示的教學預設；此次沒有重新執行應用程式的 mock、offline baseline、live DB 或 live AI 驗收，也沒有改動工單、模型、資料庫或部署狀態。既有能力證據仍引用前述 2026-10-05 實跑紀錄。
 - 依使用者明確選擇，FabOps repository 改為 PUBLIC；匿名 GitHub API 存取為 200。公開前檢查 134 個可達歷史 blob：沒有應排除的 `.env`／runtime／模型／runner／raw log 路徑，沒有所檢查的 token／私鑰格式或本機 service/operator/DB credential 命中。此為指定規則檢查，不是完整秘密掃描認證。仍保留 `.gitignore`／`.dockerignore` 與既有 trusted-main 部署限制。
 - 履歷作品網站將 FabOps 放在中英文專案第一項，卡片與案例皆附公開 GitHub 連結；使用原始 1440 × 2340 的合成本機實跑畫面與架構圖。網站 Chromium 驗證六張卡片、五項既有專案內容完整保留、五種篩選、雙語、原圖放大、GitHub 連結、鍵盤與兩種螢幕寬度。新增介紹明列 AI 輔助開發、合成資料、本機 staging 與驗證範圍。
+- 發布確認：GitHub Pages commit `c2fd74e72d153dbee61ab02ba2bc74f22676b42d` 建置狀態為 built、無 build error。以未登入 Chromium 開啟正式網址，六張卡片與圖片載入成功、FabOps 第一、English 切換正常；實際點選來源連結可讀取公開 GitHub 內容，沒有 JavaScript 錯誤。
+- 傳閱 HTML 副本與專案原件 SHA256 均為 `09c1d2fd4333d2b6a68014e2380555a3bdaf3e030be886cb7839aae4c9799c45`；上述教材互動檢查已對傳閱副本重跑通過。FabOps 文件與教材已推送，文件 commit 使用 `[skip ci]`，沒有重新部署應用程式。
