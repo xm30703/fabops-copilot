@@ -30,9 +30,9 @@
 
 狀態：採用。單元測試、MCP protocol integration、mock API UI、live domain／DB、live model evaluation 分開報告。沒有以 mocks 替代真正 AI 驗收；CI 第一版使用 offline baseline，模型品質另以 live evaluation 留下報告。
 
-## ADR-007：依職缺要求改用 Angular 前端
+## ADR-007：採用 Angular 前端
 
-狀態：採用。使用者確認求職需求提到 Angular，因此前端由 Vue 改成 Angular／TypeScript。鎖定 Angular 21，與現有 Node 24.13 相容，依據 [官方相容表](https://angular.dev/reference/versions)。framework 與 CLI 的最新 patch 不同，分別鎖定於 package-lock.json。
+狀態：採用。前端採用 Angular／TypeScript，使用型別化 API、依賴注入、共用狀態與標準化元件結構。鎖定 Angular 21，與現有 Node 24.13 相容，依據 [官方相容表](https://angular.dev/reference/versions)。framework 與 CLI 的最新 patch 不同，分別鎖定於 package-lock.json。
 
 四個 standalone feature components 經 Router 導覽，共用 Signals store；typed ApiService 透過依賴注入取得 HttpClient。元件用 OnPush，沒有 Zone.js 依賴。TypeScript 型別提供編譯檢查，domain API 仍負責實際輸入與核准權限驗證。
 
@@ -42,7 +42,7 @@
 
 ## ADR-008：GitHub CI 與本機 GPU CD
 
-狀態：採用。使用者選擇建立本機 Git 專案及 CI/CD。測試使用 GitHub hosted Ubuntu；main 通過後發布 GHCR commit SHA images，本機 Windows runner 將相同版本部署到 Docker staging。Ollama 維持主機 GPU，避免重複下載模型。原 native 開發服務與 staging 使用不同 port、volume、credentials。
+狀態：採用。Source checkout 與部署 runtime 分離，並以 CI/CD 管理版本。測試使用 GitHub hosted Ubuntu；main 通過後發布 GHCR commit SHA images，本機 Windows runner 將相同版本部署到 Docker staging。Ollama 維持主機 GPU，避免重複下載模型。原 native 開發服務與 staging 使用不同 port、volume、credentials。
 
 CI 執行 offline baseline 與真實 DB／容器測試；CD 強制 real Ollama embedding、MCP agent 及三事故引用檢查，失敗自動回復上一個成功 image。Release state 與 secrets 在 runner checkout 外。手動 rollback 和失敗恢復均已本機實跑。取捨：主機關閉或 runner 停止時 CD 等待；部署有短暫重建服務；目前只回復 images，沒有破壞性 DB migration 的回復。
 

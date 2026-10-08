@@ -64,7 +64,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\connect-github
 
 腳本會檢查目前登入帳號、工作目錄是否乾淨，以及 origin／runner 是否符合指定 repository。Git credential helper 只設定在此專案，不修改全域 Git 設定。預設 owner 為 xm30703，repo 為 fabops-copilot；可用參數指定。完成腳本仍須查看 Actions 的實際結果。
 
-本機 runner 只接受這個私人 repository 的 main 部署，不對外發布網站。正式開放網站之前需要登入與授權。私人 repository 可邀請面試官讀取；若之後改為公開，應先移除／隔離具有主機存取權的 runner。
+Repository 現為公開原始碼；應用程式仍只在本機 staging 運行。PR 使用 hosted Linux runner；本機 Windows runner 僅接受受信任的 main 部署，未提供公開網站或企業身分授權。
 
 ## 平常開發
 
@@ -76,6 +76,6 @@ git commit -m "feat: add synthetic sensor offline scenario"
 git push -u origin feat/sensor-offline
 ```
 
-在 GitHub 建 PR、讀 CI evidence、審查後合併 main，即會觸發 CD。你可以展示 commit、PR、測試結果、GHCR image tag、Actions deployment 和 rollback 紀錄，說明一個變更如何到達本機 staging。
+在 GitHub 建 PR、讀 CI evidence、審查後合併 main，即會觸發 CD。Commit、PR、測試結果、GHCR image tag、Actions deployment 與 rollback 紀錄共同追蹤變更至本機 staging 的完整路徑。
 
 官方參考：[GitHub hosted/self-hosted runners](https://docs.github.com/en/actions/reference/runners/self-hosted-runners)、[發布容器映像](https://docs.github.com/en/actions/tutorials/publish-packages/publish-docker-images)、[GITHUB_TOKEN 權限](https://docs.github.com/en/actions/tutorials/authenticate-with-github_token)。

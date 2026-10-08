@@ -1,16 +1,24 @@
-# 面試 5 分鐘展示
+# 事故調查與人工核准操作情境
 
-展示前：健康檢查顯示 domain、Ollama、chat、embedding 都 ready；`evaluate.py --agent --require-ai` 通過；Jaeger 有 trace。若不通過，演示時明確說目前是 offline 或降級模式。
+本情境使用 INC-1001 與合成設備、維護紀錄及 SOP，檢查 AI 蒐證、來源引用及人工核准的端到端行為。
 
-| 時間 | 操作與講法 |
-|---|---|
-| 0:00–0:40 | 說明問題：值班人員需要整合 telemetry、保養紀錄與 SOP。所有資料虛構，避開公司資料限制。 |
-| 0:40–1:50 | 選 INC-1001，開始調查。顯示模型自主選 MCP tools 的順序；說明 host 的 allowlist／scope／budget。 |
-| 1:50–2:40 | 核對 85 mTorr 和門檻；開引用 chunk；指出 seal issue 只是假設，缺 verification record，並非確認根因。 |
-| 2:40–3:20 | 查看 Ticket 草稿。勾選人工審查後核准，展示 audit。說明 MCP 沒有 approve 或設備控制工具。 |
-| 3:20–4:00 | 產生交接摘要，核對 incident IDs 和未結工單，不宣稱事故復原。 |
-| 4:00–5:00 | 開 Jaeger trace、ADR、測試／評估報告；說明模型故障降級與下一階段正式身分、部署、品質評估。 |
+## 前置條件
 
-預期追問：為何 MCP 不直接讓模型呼叫所有 API？如何避免重複工單？引用 ID 有效是否代表內容正確？模型不呼叫必要工具怎麼辦？SQL keyword 與 vector 分數如何校準？如何處理文件改版？公開部署還缺什麼？
+啟動方式見 [README](../README.md)。健康檢查需要 domain、Ollama、chat 與 embedding 全部 ready；以 `scripts/verify.ps1 -RequireAI` 確認真實模型與向量檢索可用。Offline 或降級模式依介面標示判讀，不能列為完整 AI 驗收。
 
-練習新增一個變更：telemetry 超過 15 分鐘時只允許蒐證與人工升級。自己實作、測試並記錄 review，這會比背誦現有程式更能證明你的能力。
+## 操作與預期結果
+
+| 步驟 | 操作 | 預期結果 |
+|---|---|---|
+| 1 | 選擇 INC-1001，開始調查 | Events 顯示實際 MCP 工具與執行順序；host 檢查 allowlist、scope 與工具 budget |
+| 2 | 檢查設備 telemetry、maintenance 與 SOP 引用 | 85 mTorr 可對照原始數值及文件門檻；seal issue 保持假設，缺少 verification record 時不能視為確認根因 |
+| 3 | 檢查工單草稿 | 草稿保留 run 與 evidence；模型可選擇不建立草稿，此時應核對調查結果與缺少資訊 |
+| 4 | 核對證據、勾選人工審查，再核准 | 獨立 operator 權限、短效一次性 token 與 domain 原子交易完成模擬工單核准及 audit；MCP 不提供核准工具 |
+| 5 | 產生交接摘要 | 保留 incident IDs、原始 facts 與未結事項，不能將摘要視為事故已復原 |
+| 6 | 開啟 Jaeger trace | 可追蹤 gateway、MCP、.NET 與 LLM 呼叫；測試與量測範圍見 [驗證紀錄](VALIDATION.md) |
+
+## 結果判讀
+
+有效的引用 ID 與正常的工具流程不代表建議語意必然正確。處置仍需由操作人員核對原始資料。模型故障、證據不足或驗證失敗時，介面須明確呈現降級狀態。
+
+所有工單均為本機模擬資料；本專案沒有設備控制、正式企業工單介接或個人帳號授權。設計邊界見 [ADR](ADR.md)，服務故障處理見 [Runbook](RUNBOOK.md)。

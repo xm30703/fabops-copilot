@@ -2,7 +2,7 @@
 
 以下先保留 2026-10-04 的實跑結果；後續 Angular、搬移與 GitHub 執行記錄按日期附於文末。使用合成資料；單元／mock、真實協定、資料庫與模型驗證分開說明。
 
-本次依職缺需求遷移為 Angular 21。前端 build／瀏覽器／dev proxy 已重新驗收；下表的 .NET、pytest、三事故模型評估、k6 與 Jaeger 數據保留前次實跑結果，後端未變更，本次沒有重跑這些檢查。
+本次前端遷移為 Angular 21。前端 build／瀏覽器／dev proxy 已重新驗收；下表的 .NET、pytest、三事故模型評估、k6 與 Jaeger 數據保留前次實跑結果，後端未變更，本次沒有重跑這些檢查。
 
 環境：Windows PowerShell **5.1**、Node 24、Python 3.12、.NET SDK 8.0.425、Docker Desktop／Docker 29.8.1、Ollama portable 0.35.1。Chat 為 **qwen2.5:7b**，embedding 為 **nomic-embed-text／768 維**，7 個 SOP chunks 存於 PostgreSQL／pgvector。這台電腦有 RTX 5070 Ti；模型延遲不代表其他硬體的結果。
 
@@ -10,21 +10,21 @@
 |---|---|---|
 | PowerShell 相容性 | 通過 | 以 powershell.exe 實際執行 stop、bootstrap、verify；不需 pwsh。stop 結束本專案程序樹，重新啟動保留 DB／模型。 |
 | Docker Compose | 通過 | PostgreSQL 與 Jaeger 啟動；domain readiness／模型健康檢查全為 true。 |
-| 標準 .NET restore／build／xUnit | 通過，8 個 xUnit | domain policy 與向量檢查；不是完整 API 測試。見 [bootstrap log](../artifacts/bootstrap.log)。 |
-| Angular 21 production build | 通過 | ng build 含 strict TypeScript／template 檢查，輸出 web/dist。見 [Angular build log](../artifacts/angular-build.log)。 |
-| pytest | 18 passed | allowlist、schema、scope、budget、citation、重複步驟、降級、evidence 收斂、cross-origin、human confirmation；另含真實 MCP stdio 握手及 live DB 測試。見 [verification log](../artifacts/verification.log)。 |
+| 標準 .NET restore／build／xUnit | 通過，8 個 xUnit | domain policy 與向量檢查；不是完整 API 測試。見 bootstrap log（`artifacts/bootstrap.log`）。 |
+| Angular 21 production build | 通過 | ng build 含 strict TypeScript／template 檢查，輸出 web/dist。見 Angular build log（`artifacts/angular-build.log`）。 |
+| pytest | 18 passed | allowlist、schema、scope、budget、citation、重複步驟、降級、evidence 收斂、cross-origin、human confirmation；另含真實 MCP stdio 握手及 live DB 測試。見 verification log（`artifacts/verification.log`）。 |
 | Live domain／DB | 通過 | 草稿 idempotency、60 秒核准 token、核准持久化、token 重放被拒絕；使用真實 API／PostgreSQL。測試工單有明確標記。 |
-| Live embedding／RAG | 3/3 命中，離題查詢無結果 | 三症狀在 top-3 chunks 找到預期 SOP；每次為 hybrid-pgvector。見 [評估 JSON](../artifacts/live-evaluation.json)。 |
+| Live embedding／RAG | 3/3 命中，離題查詢無結果 | 三症狀在 top-3 chunks 找到預期 SOP；每次為 hybrid-pgvector。見 評估 JSON（`artifacts/live-evaluation.json`）。 |
 | Live autonomous agent | 3/3 通過 | INC-1001／1002／1003 全部 ollama-agent，模型選擇 read tools／搜尋詞，引用 ID 有效且沒有核准工具；耗時 11.2／10.2／11.8 秒。 |
-| Angular Live Playwright | 1 passed，4 不適用測試 skipped | 真實模型→MCP→API→DB、引用定位、checkbox、核准、audit、知識搜尋（核對 payload／SOP-TEMP-02）、POST 交接摘要與切回調查；桌面／手機截圖、無水平溢出／JS page error。測試 10.7 秒，見 [live log](../artifacts/angular-live-e2e.log)。 |
-| Angular Mock Playwright | 3 passed | 核准 gate、四路由／deep link／reload、查詢 payload／無結果、跨頁狀態、換事故清除確認、503 恢復與文字 escaping。見 [browser log](../artifacts/angular-mock-e2e.log)；不計為真實 AI 證據。 |
-| Angular development proxy | 1 passed | 真實瀏覽器從 4200 發出 Origin=4200 的 POST，proxy 轉送至 gateway，回應 hybrid-pgvector 與預期 SOP；由 Playwright 管理 dev server 生命週期。見 [metadata](../artifacts/angular-dev-proxy.json)。 |
-| Shift Handover | 通過 | 實際 Ollama 摘要引用三個 incident IDs，保留原始 facts。見 [摘要 JSON](../artifacts/live-handover.json)。 |
-| OpenTelemetry／Jaeger | 通過 | 一條 trace 實際包含 32 spans、gateway／MCP／.NET 三服務與 LLM spans。見 [trace metadata](../artifacts/live-trace.json)。 |
-| k6 讀取 API | 通過 | 本機 5 VUs／30 秒／150 requests，0% HTTP failure，p95 27.08 ms，兩個 thresholds 通過。見 [k6 JSON](../artifacts/k6-summary.json) 及 [log](../artifacts/k6.log)；不測 LLM 併發。 |
+| Angular Live Playwright | 1 passed，4 不適用測試 skipped | 真實模型→MCP→API→DB、引用定位、checkbox、核准、audit、知識搜尋（核對 payload／SOP-TEMP-02）、POST 交接摘要與切回調查；桌面／手機截圖、無水平溢出／JS page error。測試 10.7 秒，見 live log（`artifacts/angular-live-e2e.log`）。 |
+| Angular Mock Playwright | 3 passed | 核准 gate、四路由／deep link／reload、查詢 payload／無結果、跨頁狀態、換事故清除確認、503 恢復與文字 escaping。見 browser log（`artifacts/angular-mock-e2e.log`）；不計為真實 AI 證據。 |
+| Angular development proxy | 1 passed | 真實瀏覽器從 4200 發出 Origin=4200 的 POST，proxy 轉送至 gateway，回應 hybrid-pgvector 與預期 SOP；由 Playwright 管理 dev server 生命週期。見 metadata（`artifacts/angular-dev-proxy.json`）。 |
+| Shift Handover | 通過 | 實際 Ollama 摘要引用三個 incident IDs，保留原始 facts。見 摘要 JSON（`artifacts/live-handover.json`）。 |
+| OpenTelemetry／Jaeger | 通過 | 一條 trace 實際包含 32 spans、gateway／MCP／.NET 三服務與 LLM spans。見 trace metadata（`artifacts/live-trace.json`）。 |
+| k6 讀取 API | 通過 | 本機 5 VUs／30 秒／150 requests，0% HTTP failure，p95 27.08 ms，兩個 thresholds 通過。見 k6 JSON（`artifacts/k6-summary.json`） 及 log（`artifacts/k6.log`）；不測 LLM 併發。 |
 | GitHub Actions／cloud CD | 尚未執行／未部署 | CI workflow 已建立；未推送到 GitHub，也沒有正式部署或 rollback 驗收。 |
 
-真實畫面：[桌面](../artifacts/live-workflow-desktop.png)、[手機](../artifacts/live-workflow-mobile.png)。
+真實畫面：桌面（`artifacts/live-workflow-desktop.png`）、手機（`artifacts/live-workflow-mobile.png`）。
 
 ## 可重現命令
 
@@ -105,13 +105,8 @@ Operator identity 是本機 demo，未實作正式個人帳號／OIDC／RBAC。M
 
 此處部署目的地是這台電腦的 Docker staging。Windows、Docker Desktop、Ollama 與 runner 需要運作；雲端模型、cloud application hosting 與正式製造環境仍未部署。只有文件／驗證紀錄的後續 commit 使用 `[skip ci]`，不改變已驗收 application image。
 
-## 2026-10-08：白話教材與公開作品入口
+## 2026-10-08：公開文件導覽整理
 
-- `docs/learning/index.html` 為可直接用瀏覽器開啟的單檔離線教材。15 課、84 個名詞、20 項職缺對照、30 題面試練習，包含作業／架構／資料／流程與兩張泳道時序圖。29 個程式及文件片段依明列來源擷取；合成 SOP 原文與內容 hash 的段落 ID 可供核對。原始教材與無 npm 相依的 Node builder 一併保存。
-- Chromium 在 1440 px 桌面與 390 px 手機檢查全部 15 課，沒有 JavaScript 錯誤、重複 DOM IDs 或頁面橫向溢出。15 個首要圖解的節點文字均在框內，逐圖視覺檢查完成；另檢查 MCP 逐步泳道、人工核准泳道與手機圖解放大。
-- 互動驗收通過：15 題測驗、事實分類、架構元件點選／鍵盤、名詞視窗、Agent 五情境與可選草稿／讀取順序、RAG 改寫及查無來源、核准未確認／逾期／成功／重放、部署通過／失敗／offline 拒絕／PR 隔離、程式審查練習、30 題篩選與計時、回答與閱讀進度 localStorage、字級及手機選單。核准模擬的 audit 成功一次，重放後仍為一筆。
-- 教材載入與互動過程沒有 HTTP(S) 請求，不需 Docker、API、DB 或 Ollama。所有模型順序、檢索匹配、token 時間與部署狀態是明確標示的教學預設；此次沒有重新執行應用程式的 mock、offline baseline、live DB 或 live AI 驗收，也沒有改動工單、模型、資料庫或部署狀態。既有能力證據仍引用前述 2026-10-05 實跑紀錄。
-- 依使用者明確選擇，FabOps repository 改為 PUBLIC；匿名 GitHub API 存取為 200。公開前檢查 134 個可達歷史 blob：沒有應排除的 `.env`／runtime／模型／runner／raw log 路徑，沒有所檢查的 token／私鑰格式或本機 service/operator/DB credential 命中。此為指定規則檢查，不是完整秘密掃描認證。仍保留 `.gitignore`／`.dockerignore` 與既有 trusted-main 部署限制。
-- 履歷作品網站將 FabOps 放在中英文專案第一項，卡片與案例皆附公開 GitHub 連結；使用原始 1440 × 2340 的合成本機實跑畫面與架構圖。網站 Chromium 驗證六張卡片、五項既有專案內容完整保留、五種篩選、雙語、原圖放大、GitHub 連結、鍵盤與兩種螢幕寬度。新增介紹明列 AI 輔助開發、合成資料、本機 staging 與驗證範圍。
-- 發布確認：GitHub Pages commit `c2fd74e72d153dbee61ab02ba2bc74f22676b42d` 建置狀態為 built、無 build error。以未登入 Chromium 開啟正式網址，六張卡片與圖片載入成功、FabOps 第一、English 切換正常；實際點選來源連結可讀取公開 GitHub 內容，沒有 JavaScript 錯誤。
-- 傳閱 HTML 副本與專案原件 SHA256 均為 `09c1d2fd4333d2b6a68014e2380555a3bdaf3e030be886cb7839aae4c9799c45`；上述教材互動檢查已對傳閱副本重跑通過。FabOps 文件與教材已推送，文件 commit 使用 `[skip ci]`，沒有重新部署應用程式。
+- README 保留系統用途、合成資料邊界、架構、啟動、操作情境、測試與 CI/CD；工程設計與驗證文件維持可讀。
+- 檢查公開 source tree 的 20 個 Markdown、HTML 與 JavaScript 文件，不含個人準備內容或相關入口；21 個相對連結皆指向版控內的實際檔案。原始本機驗收證據改以檔案位置表示，避免連到不公開的 raw logs。
+- 此次僅修改文件與忽略規則，沒有更改應用程式、模型、資料庫、憑證或部署狀態，也沒有重新執行 mock、offline baseline、live DB 或 live AI 測試。上述各類證據仍引用既有實跑結果。

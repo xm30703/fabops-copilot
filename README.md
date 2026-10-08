@@ -1,6 +1,6 @@
 # FabOps Copilot — 製造事故應變助手
 
-把一個合成製造告警，轉成可以核對來源、審查並核准的模擬 Ticket。這是針對 AI-enabled full-stack engineer 職缺的作品集專案。
+把一個合成製造告警，轉成可以核對來源、審查並核准的模擬 Ticket。此合成資料專案展示 AI 輔助事故調查、知識檢索與人工核准的完整系統。
 
 **技術：Angular 21／TypeScript、.NET 8 Web API、PostgreSQL 16／pgvector、Python 官方 MCP SDK、Ollama、OpenTelemetry／Jaeger。**
 
@@ -18,7 +18,7 @@
 
 ![FabOps 本機事故調查、引用與人工核准畫面](docs/portfolio/fabops-live-desktop.png)
 
-想先理解設計，可開啟 [從零到面試教材](docs/learning/README.md)：15 課白話說明、流程與泳道圖、互動演練及 30 題面試追問。下載 `docs/learning/index.html` 後以瀏覽器開啟即可離線學習。
+設計與資料流見 [系統架構](docs/ARCHITECTURE.md)，完整操作情境見 [事故調查與人工核准](docs/DEMO.md)。
 
 ## 第一步：本機啟動
 
@@ -79,9 +79,9 @@ Angular 前端使用四個 standalone feature components、Router、Signals stor
 
 Agent 自主選擇讀取工具、搜尋詞與順序。Host 固定執行一次 incident scope anchor；蒐集到 telemetry、maintenance 與 SOP 證據後結束 discovery，最多 8 輪／16 次工具呼叫，再驗證引用。草稿階段模型決定是否呼叫 draft tool，host 使用已驗證的欄位。工具不能核准工單。
 
-## 第四步：展示工程能力
+## 第四步：系統能力與驗證
 
-| 職缺能力 | 可展示的實作與證據 |
+| 系統能力 | 實作與驗證證據 |
 |---|---|
 | Full stack | Angular UI → Python gateway → .NET domain API → PostgreSQL |
 | 架構與平台賦能 | ADR、domain API、typed tool schemas、可重用 MCP server |
@@ -114,12 +114,12 @@ Live domain integration 另設 `$env:FABOPS_INTEGRATION='1'`；需已啟動 API�
 
 k6：`k6 run tests/load.js`。這是 domain-backed read API 的基礎負載測試，不測 LLM 推論吞吐。
 
-## 第五步：面試展示與下一階段
+## 第五步：操作情境與後續規劃
 
-使用 [5 分鐘展示腳本](docs/DEMO.md)，先跑 live evaluation，保留成功與失敗例子。你能說明自己的設計取捨、測試界線與修改過的內容，比只展示畫面更有說服力。
+使用 [操作情境](docs/DEMO.md) 檢查事故調查、來源引用、人工核准與交接摘要。完整 AI 流程需要先通過 live evaluation；離線或降級模式須依介面的實際標示判讀。
 
 本機 Git 與容器部署的操作見 [CI/CD 導覽](docs/CICD.md)。Staging 應用程式為 `http://127.0.0.1:4319`，Jaeger 為 `http://127.0.0.1:16687`；開發環境繼續使用 4317／16686。
 
-後續優先：人工審查模型建議與程式 → 增加 prompt injection／資料過期／模型品質評估 → 真實 OIDC／RBAC 與 async job queue → cloud staging 與正式 migration。初版仍是單機 portfolio MVP，不能聲稱已符合關鍵製造生產系統或已具備 24x7 實際支援經驗。
+後續優先：人工審查模型建議與程式 → 增加 prompt injection／資料過期／模型品質評估 → 真實 OIDC／RBAC 與 async job queue → cloud staging 與正式 migration。目前為單機 MVP；關鍵製造生產環境、正式 SLA 與 24x7 營運流程仍不在驗收範圍。
 
 官方資料來源：[MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk)、[Ollama tool calling](https://docs.ollama.com/capabilities/tool-calling)、[Ollama embeddings](https://docs.ollama.com/api/embed)、[pgvector](https://github.com/pgvector/pgvector)、[.NET OpenTelemetry](https://opentelemetry.io/docs/languages/dotnet/getting-started/)。

@@ -1,6 +1,6 @@
 # Angular 前端導覽
 
-本作品的前端已依職缺要求改為 Angular／TypeScript。四個頁面保留同一組 gateway API 與合成 domain 資料，可展示 typed API integration、依賴注入、Signals 狀態、元件分工與瀏覽器驗收。
+本系統前端使用 Angular／TypeScript。四個頁面保留同一組 gateway API 與合成 domain 資料，可展示 typed API integration、依賴注入、Signals 狀態、元件分工與瀏覽器驗收。
 
 ## 環境與啟動
 
@@ -56,9 +56,5 @@ Remove-Item Env:FABOPS_PROXY_LIVE
 切換功能頁面保留調查結果與審查勾選；切換另一個事故或開始新調查會清除勾選。核准後更新畫面、工單與 audit。引用按鈕只定位來源 DOM，不改變目前 route。
 
 Router 採用 hash location，例如 /#/knowledge，可直接開啟與重新整理；這讓目前 static gateway 不需新增 SPA fallback。若未來改用 path routes，必須一起設定伺服器 index.html fallback。
-
-## 面試練習
-
-先用自己的話解釋「元件→store→ApiService→gateway」與 signal/computed 的關係，再親自加一個 telemetry 過期警示與瀏覽器測試。程式由 AI 協助遷移，人工 review 尚待你完成；AI Dev Log 有建議清單。
 
 官方參考：[Signals](https://angular.dev/guide/signals)、[HttpClient](https://angular.dev/guide/http/setup)、[Router](https://angular.dev/guide/routing)、[CLI proxy](https://angular.dev/tools/cli/serve)。

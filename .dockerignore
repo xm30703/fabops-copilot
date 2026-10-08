@@ -14,3 +14,5 @@ artifacts
 **/test-results
 **/playwright-report
 **/*.log
+docs/learning/
+docs/presentation/
